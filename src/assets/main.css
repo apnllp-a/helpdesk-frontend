@@ -1,0 +1,51 @@
+/* src/assets/main.css */
+
+/* 1. นำเข้าฟอนต์ Kanit จาก Google Fonts (เอาไว้บรรทัดบนสุด) */
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+    /* ชุดสีเดิมของเรา */
+    --color-primary: #7286D3;
+    --color-primary-light: #8EA7E9;
+    --color-secondary: #E5E0FF;
+    --color-secondary-light: #FFF2F2;
+
+    --color-dark-bg: #1a1b26;
+    --color-dark-card: #242533;
+    --color-dark-text: #a9b1d6;
+    --color-dark-muted: #565f89;
+
+    /* 2. ตั้งค่าให้ Kanit เป็นฟอนต์หลักของระบบ (แทนที่ system-ui) */
+    --font-sans: 'Kanit', sans-serif;
+}
+
+@variant dark (&:is(.dark *));
+
+/* ----------------------------------------- */
+/* โค้ดส่วน @layer base และ @layer components ด้านล่าง ปล่อยไว้เหมือนเดิมได้เลยครับ */
+/* ----------------------------------------- */
+@layer base {
+    html {
+        @apply scroll-smooth;
+    }
+
+    body {
+        @apply bg-secondary-light text-gray-800 transition-colors duration-300;
+    }
+
+    .dark body {
+        @apply bg-dark-bg text-dark-text;
+    }
+}
+
+@layer components {
+    .btn-primary {
+        @apply bg-primary hover:bg-primary-light text-white font-semibold py-2 px-4 rounded-lg transition duration-300 shadow-sm hover:shadow;
+    }
+
+    .card {
+        @apply bg-white dark:bg-dark-card rounded-xl shadow-sm p-6 transition-colors duration-300;
+    }
+}
