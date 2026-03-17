@@ -53,7 +53,7 @@
                             <td class="py-4 px-6">
                                 <p class="text-sm font-medium text-gray-800 dark:text-white">{{ ticket.subject }}</p>
                                 <p class="text-xs text-gray-500 dark:text-dark-muted mt-1 truncate w-48">{{ ticket.desc
-                                    }}</p>
+                                }}</p>
                             </td>
                             <td class="py-4 px-6 text-sm text-gray-700 dark:text-dark-text">{{ ticket.user }}</td>
                             <td class="py-4 px-6">
@@ -80,7 +80,7 @@
                     <button @click="currentPage--" :disabled="currentPage === 1"
                         class="px-3 py-1 rounded border border-gray-200 dark:border-gray-700 disabled:opacity-50">&laquo;</button>
                     <button class="px-3 py-1 rounded border border-primary bg-primary text-white">{{ currentPage
-                        }}</button>
+                    }}</button>
                     <button @click="currentPage++" :disabled="currentPage >= totalPages"
                         class="px-3 py-1 rounded border border-gray-200 dark:border-gray-700 disabled:opacity-50">&raquo;</button>
                 </div>
@@ -161,7 +161,7 @@ const fetchTickets = async () => {
             id: t._id,
             subject: t.problem_details.split('\n')[0], // เอาบรรทัดแรกเป็นหัวข้อ
             desc: t.problem_details,
-            user: t.userId,
+            user: t.senderName || t.userId.substring(0, 8) + '...',
             status: t.status || 'Pending'
         }))
     } catch (err) {
