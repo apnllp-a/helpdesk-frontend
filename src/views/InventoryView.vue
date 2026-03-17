@@ -86,7 +86,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-
+import Swal from 'sweetalert2'
 // เปลี่ยน URL เป็นของ Railway พี่นะครับ
 const API_URL = 'https://servern8n-production-a0f5.up.railway.app/api/inventory'
 
@@ -96,7 +96,10 @@ const imagePreview = ref<string | null>(null)
 const newItem = ref({ id: '', name: '', stock: 1, image: null })
 
 // --- ฟังก์ชันหลัก ---
-
+const Toast = Swal.mixin({
+    background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
+    color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#1e293b',
+});
 // 1. ดึงข้อมูลจาก API มาโชว์ในตาราง
 const loadInventory = async () => {
     try {
@@ -111,16 +114,70 @@ const loadInventory = async () => {
 const addNewItem = async () => {
     if (newItem.value.id && newItem.value.name) {
         try {
+            // แสดง Loading ระหว่างบันทึก
+            Swal.fire({
+                title: 'กำลังบันทึกข้อมูล...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading()
+                }
+            })
+
             await axios.post(API_URL, newItem.value)
-            alert('บันทึกอุปกรณ์เรียบร้อย!')
+
+            // แจ้งเตือนสำเร็จ
+            Swal.fire({
+                icon: 'success',
+                title: 'บันทึกสำเร็จ!',
+                text: 'อุปกรณ์ถูกเพิ่มลงในคลังเรียบร้อยแล้ว',
+                confirmButtonColor: '#6366f1', // สี Indigo ให้เข้ากับ Theme
+                timer: 2000,
+                timerProgressBar: true
+            })
+
             closeModal()
-            loadInventory() // โหลดข้อมูลใหม่มาโชว์ทันที
+            loadInventory()
         } catch (err) {
-            alert('เกิดข้อผิดพลาดในการบันทึก')
+            // แจ้งเตือนเมื่อ Error
+            Swal.fire({
+                icon: 'error',
+                title: 'เกิดข้อผิดพลาด',
+                text: 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง',
+                confirmButtonColor: '#ef4444'
+            })
             console.error(err)
         }
     } else {
-        alert('กรุณากรอกข้อมูลให้ครบ')
+        // แจ้งเตือนเมื่อกรอกไม่ครบ
+        Swal.fire({
+            icon: 'warning',
+            title: 'ข้อมูลไม่ครบ',
+            text: 'กรุณากรอกรหัสและชื่ออุปกรณ์ให้ครบถ้วนนะ',
+            confirmButtonColor: '#f59e0b'
+        })
+    }
+}
+
+const deleteItem = async (id, mongoId) => {
+    const result = await Swal.fire({
+        title: `ยืนยันการลบ?`,
+        text: `รหัส ${id} จะถูกลบออกจากระบบถาวร`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'ใช่, ลบเลย!',
+        cancelButtonText: 'ยกเลิก'
+    })
+
+    if (result.isConfirmed) {
+        try {
+            await axios.delete(`${API_URL}/${mongoId}`)
+            Swal.fire('ลบแล้ว!', 'ข้อมูลถูกลบเรียบร้อย', 'success')
+            loadInventory()
+        } catch (err) {
+            Swal.fire('Error', 'ลบไม่สำเร็จ', 'error')
+        }
     }
 }
 
