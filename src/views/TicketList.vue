@@ -176,27 +176,44 @@ const fetchTickets = async () => {
 const saveTicket = async () => {
     try {
         Swal.fire({
-            title: 'กำลังอัปเดต...',
+            title: 'กำลังบันทึกและส่งการแจ้งเตือน...',
             allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        })
+            didOpen: () => {
+                Swal.showLoading()
+            }
+        });
 
-        // ยิง API ตัวที่เราเพิ่มใหม่ใน Backend
-        await axios.put(`${API_URL}/admin/${selectedTicket.value.id}`, {
+        const res = await axios.put(`${API_URL}/admin/${selectedTicket.value.id}`, {
             status: selectedTicket.value.status
-        })
+        });
 
-        await Swal.fire({
+        const updatedData = res.data.data;
+
+        await axios.post('https://unappetizing-crysta-acronal.ngrok-free.dev/webhook/update-notification', {
+            userId: updatedData.userId,
+            status: updatedData.status,
+            details: updatedData.problem_details,
+            admin: updatedData.action_by || 'Admin'
+        });
+
+        Swal.fire({
             icon: 'success',
-            title: 'อัปเดตสถานะเรียบร้อย',
-            timer: 1500,
+            title: 'อัปเดตสำเร็จ!',
+            text: 'ระบบได้แจ้งเตือนสถานะใหม่ไปยัง LINE ลูกค้าเรียบร้อยแล้ว',
+            timer: 2000,
             showConfirmButton: false
-        })
+        });
 
-        showModal.value = false
-        fetchTickets() // รีโหลดข้อมูลใหม่
+        showModal.value = false;
+        fetchTickets();
+
     } catch (err) {
-        Swal.fire('Error', 'ไม่สามารถบันทึกได้', 'error')
+        console.error("Save Ticket Error:", err);
+        Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด',
+            text: 'อัปเดตสถานะสำเร็จ แต่อาจมีปัญหาในการส่ง LINE แจ้งเตือน'
+        });
     }
 }
 
