@@ -5,7 +5,7 @@
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" />
                 </div>
-                <input v-model="searchQuery" type="text" placeholder="ค้นหา Ticket ID, หัวข้อปัญหา..."
+                <input v-model="searchQuery" type="text" placeholder="ค้นหา ID, หัวข้อปัญหา..."
                     class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-dark-bg text-gray-800 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all" />
             </div>
             <div class="flex gap-2 w-full md:w-auto">
@@ -16,6 +16,11 @@
                     <option value="In Progress">กำลังดำเนินการ</option>
                     <option value="Resolved">เสร็จสิ้น</option>
                 </select>
+                <button @click="fetchTickets"
+                    class="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    <ArrowPathIcon
+                        :class="['w-5 h-5 text-gray-600 dark:text-gray-300', loading ? 'animate-spin' : '']" />
+                </button>
             </div>
         </div>
 
@@ -34,12 +39,17 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                        <tr v-if="paginatedTickets.length === 0">
+                        <tr v-if="loading">
+                            <td colspan="5" class="py-8 text-center text-gray-500">กำลังโหลดข้อมูล...</td>
+                        </tr>
+                        <tr v-else-if="paginatedTickets.length === 0">
                             <td colspan="5" class="py-8 text-center text-gray-500">ไม่พบข้อมูลที่ค้นหา</td>
                         </tr>
                         <tr v-for="ticket in paginatedTickets" :key="ticket.id"
                             class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                            <td class="py-4 px-6 text-sm font-medium text-primary">#{{ ticket.id }}</td>
+                            <td class="py-4 px-6 text-sm font-medium text-primary">
+                                #{{ ticket.id.substring(ticket.id.length - 6).toUpperCase() }}
+                            </td>
                             <td class="py-4 px-6">
                                 <p class="text-sm font-medium text-gray-800 dark:text-white">{{ ticket.subject }}</p>
                                 <p class="text-xs text-gray-500 dark:text-dark-muted mt-1 truncate w-48">{{ ticket.desc
@@ -52,10 +62,9 @@
                                     {{ ticket.status }}
                                 </span>
                             </td>
-                            <td class="py-4 px-6 text-right space-x-2">
+                            <td class="py-4 px-6 text-right">
                                 <button @click="openModal(ticket)"
-                                    class="text-gray-400 hover:text-primary transition-colors p-2 bg-gray-100 dark:bg-gray-800 rounded-full"
-                                    title="ดูรายละเอียด/แก้ไข">
+                                    class="text-gray-400 hover:text-primary transition-colors p-2 bg-gray-100 dark:bg-gray-800 rounded-full">
                                     <EyeIcon class="w-5 h-5 inline" />
                                 </button>
                             </td>
@@ -80,47 +89,43 @@
 
         <div v-if="showModal"
             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div
-                class="bg-white dark:bg-dark-card w-full max-w-lg rounded-2xl shadow-xl overflow-hidden transform transition-all">
+            <div class="bg-white dark:bg-dark-card w-full max-w-lg rounded-2xl shadow-xl overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-gray-800 dark:text-white">รายละเอียดงาน #{{ selectedTicket?.id }}
-                    </h3>
-                    <button @click="showModal = false"
-                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-white">จัดการงาน #{{
+                        selectedTicket?.id.substring(selectedTicket.id.length - 6).toUpperCase() }}</h3>
+                    <button @click="showModal = false" class="text-gray-400 hover:text-gray-600">
                         <XMarkIcon class="w-6 h-6" />
                     </button>
                 </div>
                 <div class="p-6 space-y-4">
                     <div>
-                        <label class="text-xs text-gray-500 dark:text-dark-muted">หัวข้อปัญหา</label>
-                        <p class="text-sm font-medium text-gray-800 dark:text-white">{{ selectedTicket?.subject }}</p>
+                        <label class="text-xs text-gray-500">หัวข้อปัญหา</label>
+                        <p class="text-sm font-medium dark:text-white">{{ selectedTicket?.subject }}</p>
                     </div>
                     <div>
-                        <label class="text-xs text-gray-500 dark:text-dark-muted">รายละเอียด</label>
-                        <p
-                            class="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-dark-bg p-3 rounded-lg mt-1">
-                            {{ selectedTicket?.desc }}</p>
+                        <label class="text-xs text-gray-500">รายละเอียด</label>
+                        <p class="text-sm bg-gray-50 dark:bg-dark-bg p-3 rounded-lg mt-1 dark:text-gray-300">{{
+                            selectedTicket?.desc }}</p>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="text-xs text-gray-500 dark:text-dark-muted">ผู้แจ้ง</label>
-                            <p class="text-sm text-gray-800 dark:text-white">{{ selectedTicket?.user }}</p>
+                            <label class="text-xs text-gray-500">ผู้แจ้ง (LINE ID)</label>
+                            <p class="text-sm dark:text-white">{{ selectedTicket?.user }}</p>
                         </div>
                         <div>
-                            <label class="text-xs text-gray-500 dark:text-dark-muted">เปลี่ยนสถานะ</label>
+                            <label class="text-xs text-gray-500">สถานะปัจจุบัน</label>
                             <select v-model="selectedTicket.status"
                                 class="w-full mt-1 p-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-dark-bg text-sm">
-                                <option value="Pending">รอดำเนินการ</option>
-                                <option value="In Progress">กำลังดำเนินการ</option>
-                                <option value="Resolved">เสร็จสิ้น</option>
+                                <option value="Pending">Pending (รอดำเนินการ)</option>
+                                <option value="In Progress">In Progress (กำลังทำ)</option>
+                                <option value="Resolved">Resolved (เสร็จสิ้น)</option>
                             </select>
                         </div>
                     </div>
                 </div>
                 <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3">
-                    <button @click="showModal = false"
-                        class="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">ปิด</button>
-                    <button @click="saveTicket" class="btn-primary text-sm">บันทึกข้อมูล</button>
+                    <button @click="showModal = false" class="px-4 py-2 text-sm text-gray-600">ปิด</button>
+                    <button @click="saveTicket" class="btn-primary text-sm px-6">บันทึกและอัปเดต</button>
                 </div>
             </div>
         </div>
@@ -128,27 +133,78 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { MagnifyingGlassIcon, EyeIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { ref, computed, onMounted } from 'vue'
+import { MagnifyingGlassIcon, EyeIcon, XMarkIcon, ArrowPathIcon } from '@heroicons/vue/24/outline'
+import axios from 'axios'
+import Swal from 'sweetalert2'
 
-// Mock Data
-const tickets = ref([
-    { id: '1005', subject: 'จอคอมพิวเตอร์กะพริบ', desc: 'จอ LG ที่โต๊ะทำงานมีอาการกะพริบเป็นช่วงๆ ขอให้มาตรวจสอบ', user: 'คุณสมศักดิ์ (IT)', status: 'Pending' },
-    { id: '1004', subject: 'ลืมรหัสผ่าน ERP', desc: 'เข้าระบบ ERP ไม่ได้ ต้องการให้รีเซ็ตรหัสผ่านใหม่ด่วน', user: 'คุณมาลี (HR)', status: 'Pending' },
-    { id: '1003', subject: 'ขอเบิกเมาส์ใหม่', desc: 'เมาส์คลิกซ้ายไม่ติด ขอเบิกตัวใหม่ครับ', user: 'คุณจอห์น (MKT)', status: 'Resolved' },
-    { id: '1002', subject: 'เข้า Wi-Fi บริษัทไม่ได้', desc: 'เปลี่ยนรหัสผ่านใหม่แล้วแต่ยังเชื่อมต่อไม่ได้ ขึ้น Authentication Error', user: 'คุณสมหญิง (HR)', status: 'In Progress' },
-    { id: '1001', subject: 'ปริ้นเตอร์แผนกบัญชีพิมพ์ไม่ออก', desc: 'สั่งปริ้นแล้วคิวค้าง เครื่องไม่ทำงาน ไฟแดงกระพริบ', user: 'คุณสมชาย (ACC)', status: 'Resolved' },
-])
+// API Config
+const API_URL = 'https://servern8n-production-a0f5.up.railway.app/api/repairs'
 
-// ฟังก์ชันค้นหา & กรอง
+// State
+const tickets = ref([])
+const loading = ref(false)
 const searchQuery = ref('')
 const statusFilter = ref('')
 const currentPage = ref(1)
-const itemsPerPage = 3
+const itemsPerPage = 8
+const showModal = ref(false)
+const selectedTicket = ref<any>(null)
 
+// 1. Fetch Data จาก MongoDB
+const fetchTickets = async () => {
+    loading.value = true
+    try {
+        const res = await axios.get(API_URL)
+        // Map ข้อมูลให้เข้ากับ UI ของเรา
+        tickets.value = res.data.map((t: any) => ({
+            id: t._id,
+            subject: t.problem_details.split('\n')[0], // เอาบรรทัดแรกเป็นหัวข้อ
+            desc: t.problem_details,
+            user: t.userId,
+            status: t.status || 'Pending'
+        }))
+    } catch (err) {
+        console.error(err)
+        Swal.fire('Error', 'ไม่สามารถโหลดข้อมูลได้', 'error')
+    } finally {
+        loading.value = false
+    }
+}
+
+// 2. บันทึกการเปลี่ยนสถานะ
+const saveTicket = async () => {
+    try {
+        Swal.fire({
+            title: 'กำลังอัปเดต...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        })
+
+        // ยิง API ตัวที่เราเพิ่มใหม่ใน Backend
+        await axios.put(`${API_URL}/admin/${selectedTicket.value.id}`, {
+            status: selectedTicket.value.status
+        })
+
+        await Swal.fire({
+            icon: 'success',
+            title: 'อัปเดตสถานะเรียบร้อย',
+            timer: 1500,
+            showConfirmButton: false
+        })
+
+        showModal.value = false
+        fetchTickets() // รีโหลดข้อมูลใหม่
+    } catch (err) {
+        Swal.fire('Error', 'ไม่สามารถบันทึกได้', 'error')
+    }
+}
+
+// Logic: ค้นหาและกรอง
 const filteredTickets = computed(() => {
-    return tickets.value.filter(t => {
-        const matchSearch = t.subject.includes(searchQuery.value) || t.id.includes(searchQuery.value)
+    return tickets.value.filter((t: any) => {
+        const matchSearch = t.subject.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+            t.id.toLowerCase().includes(searchQuery.value.toLowerCase())
         const matchStatus = statusFilter.value ? t.status === statusFilter.value : true
         return matchSearch && matchStatus
     })
@@ -161,22 +217,9 @@ const paginatedTickets = computed(() => {
     return filteredTickets.value.slice(start, start + itemsPerPage)
 })
 
-// ระบบ Modal
-const showModal = ref(false)
-const selectedTicket = ref<any>(null)
-
 const openModal = (ticket: any) => {
-    selectedTicket.value = { ...ticket } // Copy ข้อมูลกันแก้แล้วกระทบตารางทันที
+    selectedTicket.value = { ...ticket }
     showModal.value = true
-}
-
-const saveTicket = () => {
-    const index = tickets.value.findIndex(t => t.id === selectedTicket.value.id)
-    if (index !== -1) {
-        tickets.value[index].status = selectedTicket.value.status
-    }
-    showModal.value = false
-    alert('บันทึกข้อมูลเรียบร้อยแล้ว (Mock)')
 }
 
 const statusStyle = (status: string) => {
@@ -187,4 +230,6 @@ const statusStyle = (status: string) => {
         default: return 'bg-gray-50 border-gray-200 text-gray-700'
     }
 }
+
+onMounted(fetchTickets)
 </script>
