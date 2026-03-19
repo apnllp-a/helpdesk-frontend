@@ -1,12 +1,3 @@
-<template>
-    <div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-bg">
-        <div class="text-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p class="text-gray-600 dark:text-gray-400 font-medium">กำลังยืนยันตัวตนและตรวจสอบสิทธิ์...</p>
-        </div>
-    </div>
-</template>
-
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -28,14 +19,25 @@ onMounted(async () => {
     try {
         // 1. ส่ง Code ไปที่ Backend ของพี่บน Railway
         const response = await axios.post(`${API_URL}/auth/line`, { code })
-        const { token, role, lineProfile } = response.data
+
+        // 💡 แก้ตรงนี้: Backend ของเราส่งตัวแปรชื่อ user กลับมาครับ
+        const { token, role, user } = response.data
 
         // 2. เช็คว่าเป็น Admin หรือไม่
         if (role === 'admin') {
             localStorage.setItem('token', token)
             localStorage.setItem('role', role)
 
+            // 💡 เพิ่มตรงนี้: เก็บชื่อและรูปภาพ เผื่อเอาไปโชว์ที่มุมขวาบนของ AdminLayout
+            if (user) {
+                localStorage.setItem('userName', user.displayName || 'Admin')
+                if (user.pictureUrl) {
+                    localStorage.setItem('userPicture', user.pictureUrl)
+                }
+            }
+
             router.push('/') // เข้าหน้า Dashboard
+
         } else {
             // 3. ถ้าไม่ใช่ Admin ให้เตะไปหน้า Add LINE บอท
             await Swal.fire({
@@ -44,11 +46,11 @@ onMounted(async () => {
                 text: 'บัญชีของคุณไม่มีสิทธิ์เข้าถึงระบบนี้ กรุณาใช้งานผ่าน Chatbot',
                 confirmButtonText: 'ตกลง'
             })
-            window.location.href = 'https://lin.ee/@755whwxp' // ใส่ลิงก์บอทพี่ตรงนี้
+            window.location.href = 'https://lin.ee/@755whwxp' // ลิงก์บอทถูกต้องครับ!
         }
     } catch (error) {
         console.error(error)
-        Swal.fire('ผิดพลาด', 'ไม่สามารถเข้าสู่ระบบได้', 'error')
+        Swal.fire('ผิดพลาด', 'ไม่สามารถเข้าสู่ระบบได้ หรือ Session หมดอายุ', 'error')
         router.push('/login')
     }
 })
