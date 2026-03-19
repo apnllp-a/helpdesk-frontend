@@ -22,6 +22,11 @@ const routes = [
       { path: 'inventory', name: 'คลังอุปกรณ์', component: InventoryView },
       { path: 'users', name: 'จัดการผู้ใช้งาน', component: UsersView },
       { path: 'reports', name: 'รายงานสถิติ', component: ReportsView },
+      {
+  path: '/callback',
+  name: 'callback',
+  component: () => import('../views/CallbackView.vue')
+}
     ]
   }
 ]

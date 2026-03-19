@@ -23,8 +23,9 @@
                             <img :src="item.image || 'https://via.placeholder.com/40'"
                                 class="w-10 h-10 rounded-lg object-cover bg-gray-100" />
                         </td>
-                        <td class="py-4 px-4 text-sm text-gray-500">{{ item.id }}</td>
-                        <td class="py-4 px-4 font-medium text-gray-800 dark:text-white">{{ item.name }}</td>
+                        <td class="py-4 px-4 text-sm text-gray-500">{{ item.id || item._id.slice(-6).toUpperCase() }}
+                        </td>
+                        <td class="py-4 px-4 font-medium text-gray-800 dark:text-white">{{ item.itemName }}</td>
                         <td class="py-4 px-4 font-bold text-primary">{{ item.stock }} ชิ้น</td>
                     </tr>
                 </tbody>
@@ -62,7 +63,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">ชื่ออุปกรณ์</label>
-                        <input v-model="newItem.name" type="text"
+                        <input v-model="newItem.itemName" type="text"
                             class="w-full mt-1 p-2 rounded border border-gray-300 dark:border-gray-700 bg-transparent dark:text-white focus:ring-2 focus:ring-primary/50 outline-none"
                             placeholder="เช่น เมาส์ไร้สาย">
                     </div>
@@ -87,20 +88,20 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import Swal from 'sweetalert2'
-// เปลี่ยน URL เป็นของ Railway พี่นะครับ
+
 const API_URL = 'https://servern8n-production-a0f5.up.railway.app/api/inventory'
 
 const inventory = ref([])
 const showAddModal = ref(false)
 const imagePreview = ref<string | null>(null)
-const newItem = ref({ id: '', name: '', stock: 1, image: null })
+// ✅ แก้ตรงนี้: เปลี่ยนโครงสร้างเริ่มต้นให้ใช้ itemName
+const newItem = ref({ id: '', itemName: '', stock: 1, image: null })
 
-// --- ฟังก์ชันหลัก ---
 const Toast = Swal.mixin({
     background: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
     color: document.documentElement.classList.contains('dark') ? '#ffffff' : '#1e293b',
 });
-// 1. ดึงข้อมูลจาก API มาโชว์ในตาราง
+
 const loadInventory = async () => {
     try {
         const res = await axios.get(API_URL)
@@ -110,11 +111,10 @@ const loadInventory = async () => {
     }
 }
 
-// 2. ส่งข้อมูลอุปกรณ์ใหม่ไปบันทึก
 const addNewItem = async () => {
-    if (newItem.value.id && newItem.value.name) {
+    // ✅ แก้ตรงนี้: เช็คค่า itemName แทน name
+    if (newItem.value.id && newItem.value.itemName) {
         try {
-            // แสดง Loading ระหว่างบันทึก
             Swal.fire({
                 title: 'กำลังบันทึกข้อมูล...',
                 allowOutsideClick: false,
@@ -125,12 +125,11 @@ const addNewItem = async () => {
 
             await axios.post(API_URL, newItem.value)
 
-            // แจ้งเตือนสำเร็จ
             Swal.fire({
                 icon: 'success',
                 title: 'บันทึกสำเร็จ!',
                 text: 'อุปกรณ์ถูกเพิ่มลงในคลังเรียบร้อยแล้ว',
-                confirmButtonColor: '#6366f1', // สี Indigo ให้เข้ากับ Theme
+                confirmButtonColor: '#6366f1',
                 timer: 2000,
                 timerProgressBar: true
             })
@@ -138,7 +137,6 @@ const addNewItem = async () => {
             closeModal()
             loadInventory()
         } catch (err) {
-            // แจ้งเตือนเมื่อ Error
             Swal.fire({
                 icon: 'error',
                 title: 'เกิดข้อผิดพลาด',
@@ -148,7 +146,6 @@ const addNewItem = async () => {
             console.error(err)
         }
     } else {
-        // แจ้งเตือนเมื่อกรอกไม่ครบ
         Swal.fire({
             icon: 'warning',
             title: 'ข้อมูลไม่ครบ',
@@ -181,7 +178,6 @@ const deleteItem = async (id, mongoId) => {
     }
 }
 
-// 3. จัดการรูปภาพ (Base64)
 const handleImageUpload = (event: any) => {
     const file = event.target.files[0]
     if (file) {
@@ -198,10 +194,10 @@ const handleImageUpload = (event: any) => {
 const closeModal = () => {
     showAddModal.value = false
     imagePreview.value = null
-    newItem.value = { id: '', name: '', stock: 1, image: null }
+    // ✅ แก้ตรงนี้: รีเซ็ตค่าให้เป็น itemName
+    newItem.value = { id: '', itemName: '', stock: 1, image: null }
 }
 
-// โหลดข้อมูลครั้งแรกเมื่อเปิดหน้าเว็บ
 onMounted(() => {
     loadInventory()
 })

@@ -76,7 +76,8 @@ import {
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, ArcElement)
 
-const API_URL = 'https://servern8n-production-a0f5.up.railway.app/api/repairs'
+// ✅ เปลี่ยน URL ไปดึงข้อมูลจาก tickets แทน
+const API_URL = 'https://servern8n-production-a0f5.up.railway.app/api/tickets'
 const tickets = ref([])
 const loading = ref(true)
 
@@ -88,29 +89,37 @@ const fetchReportData = async () => {
     } catch (err) {
         console.error("Fetch report error:", err)
     } finally {
-        // ให้เวลา Chart.js เตรียมตัวนิดนึงครับ
         setTimeout(() => { loading.value = false }, 500)
     }
 }
 
-// คำนวณ SLA จริง
+// ✅ คำนวณ SLA จริง (ปรับสถานะเป็น completed และใช้ createdAt)
 const averageSLA = computed(() => {
-    const resolved = tickets.value.filter((t: any) => t.status === 'Resolved' && t.reported_at && t.completed_at)
+    // กรองเฉพาะงานที่เสร็จแล้ว
+    const resolved = tickets.value.filter((t: any) => t.status === 'completed' && t.createdAt)
     if (resolved.length === 0) return "0.0"
+
     const totalDiff = resolved.reduce((acc, t: any) => {
-        return acc + (new Date(t.completed_at).getTime() - new Date(t.reported_at).getTime())
+        // ถ้าไม่มี completedAt ให้ใช้ updatedAt หรือเวลาปัจจุบันแทนชั่วคราวเพื่อไม่ให้โค้ดพัง
+        const endTime = t.completedAt ? new Date(t.completedAt).getTime() : (t.updatedAt ? new Date(t.updatedAt).getTime() : new Date().getTime())
+        const startTime = new Date(t.createdAt).getTime()
+        return acc + (endTime - startTime)
     }, 0)
+
     return ((totalDiff / resolved.length) / (1000 * 60 * 60)).toFixed(1)
 })
 
-const backlogCount = computed(() => tickets.value.filter((t: any) => t.status !== 'Resolved').length)
+// ✅ งานที่ค้างอยู่ (อะไรที่ไม่ใช่ completed ถือว่าค้างหมด)
+const backlogCount = computed(() => tickets.value.filter((t: any) => t.status !== 'completed').length)
 
-// กราฟแท่ง (ใช้สี Indigo เดิม)
+// ✅ กราฟแท่ง (นับจำนวนตั๋วรายวันจาก createdAt)
 const barChartData = computed(() => {
     const counts = [0, 0, 0, 0, 0, 0, 0] // อา - ส
     tickets.value.forEach((t: any) => {
-        const day = new Date(t.reported_at).getDay()
-        counts[day]++
+        if (t.createdAt) {
+            const day = new Date(t.createdAt).getDay()
+            counts[day]++
+        }
     })
     const sortedData = [...counts.slice(1), counts[0]] // ปรับเป็น จ - อา
     return {
@@ -125,16 +134,16 @@ const barChartData = computed(() => {
     }
 })
 
-// กราฟวงแหวน (สีตามสถานะ)
+// ✅ กราฟวงแหวน (สีตามสถานะใหม่: pending, in-progress, completed)
 const doughnutChartData = computed(() => {
     const getC = (s: string) => tickets.value.filter((t: any) => t.status === s).length
     return {
         labels: ['รอดำเนินการ', 'กำลังทำ', 'เสร็จสิ้น'],
         datasets: [{
-            backgroundColor: ['#f59e0b', '#8b5cf6', '#10b981'],
+            backgroundColor: ['#f59e0b', '#8b5cf6', '#10b981'], // ส้ม, ม่วง, เขียว
             hoverOffset: 15,
             borderWidth: 0,
-            data: [getC('Pending'), getC('In Progress'), getC('Resolved')]
+            data: [getC('pending'), getC('in-progress'), getC('completed')]
         }]
     }
 })
