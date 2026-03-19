@@ -6,6 +6,7 @@ import TicketList from '../views/TicketList.vue'
 import InventoryView from '../views/InventoryView.vue'
 import UsersView from '../views/UsersView.vue'
 import ReportsView from '../views/ReportsView.vue'
+import AssignmentView from '../views/AssignmentView.vue'
 import CallbackView from '../views/CallbackView.vue' // Import มาเลยจะใช้ง่ายกว่าครับ
 
 const routes = [
@@ -26,6 +27,7 @@ const routes = [
     children: [
       { path: '', name: 'Dashboard', component: DashboardView },
       { path: 'tickets', name: 'จัดการทิกเก็ต', component: TicketList },
+      { path: 'assignmentView', name: 'มอบหมายงาน', component: AssignmentView },
       { path: 'inventory', name: 'คลังอุปกรณ์', component: InventoryView },
       { path: 'users', name: 'จัดการผู้ใช้งาน', component: UsersView },
       { path: 'reports', name: 'รายงานสถิติ', component: ReportsView },
