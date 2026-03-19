@@ -48,7 +48,7 @@ const isLoading = ref(false)
 
 // 🎯 ข้อมูลที่ต้องใช้ (แนะนำให้เอาไปไว้ใน .env ของ Frontend)
 const LINE_CLIENT_ID = '2009544560'
-const REDIRECT_URI = encodeURIComponent('https://helpdesk-frontend-2asnq4cla-apinanlimlampai-1234s-projects.vercel.app/callback') // หรือ URL จริงของพี่
+const REDIRECT_URI = encodeURIComponent('https://helpdesk-frontend-amber.vercel.app/callback')
 
 const loginWithLine = () => {
     isLoading.value = true
