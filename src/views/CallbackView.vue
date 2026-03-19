@@ -44,7 +44,7 @@ onMounted(async () => {
                 text: 'บัญชีของคุณไม่มีสิทธิ์เข้าถึงระบบนี้ กรุณาใช้งานผ่าน Chatbot',
                 confirmButtonText: 'ตกลง'
             })
-            window.location.href = 'https://lin.ee/YOUR_BOT_ID' // ใส่ลิงก์บอทพี่ตรงนี้
+            window.location.href = 'https://lin.ee/@755whwxp' // ใส่ลิงก์บอทพี่ตรงนี้
         }
     } catch (error) {
         console.error(error)
